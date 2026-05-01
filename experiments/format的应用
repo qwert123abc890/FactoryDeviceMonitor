@@ -1,0 +1,62 @@
+#include<thread>
+#include<iostream>
+#include<string>
+#include<format>
+#include<sstream>
+enum class LogLevel
+{
+	DEBUG,
+	INFO,
+	WARNING,
+	ERROR,
+};
+
+
+struct LogMessage
+{
+	LogLevel level;
+	std::string text;
+	std::thread::id thread_id;
+
+public:
+	std::string get_level_string(const LogLevel& level) const
+	{
+		switch (level)
+		{
+		case LogLevel::DEBUG:  return "DEBUG";
+		case LogLevel::INFO:   return "INFO";
+		case LogLevel::WARNING: return "WARNING";
+		case LogLevel::ERROR:  return "ERROR";
+		default:             return "UNKNOWN";
+		}
+
+		return "UNKNOWN";
+	}
+
+	std::string get_threadID_string(const std::thread::id& tid) const
+	{
+		std::stringstream ss;
+		ss << tid;
+		return ss.str();
+	}
+
+
+};
+
+template<>
+struct std::formatter<LogMessage> : std::formatter<std::string>
+{
+	auto format(const LogMessage& log, std::format_context& context) const
+	{
+		std::string string_formatted = "[" + log.get_level_string(log.level) + "] : " + log.text + " (thread_id: " + log.get_threadID_string(log.thread_id) + ")";
+		return std::formatter<std::string>::format(string_formatted,context);
+	}
+};
+
+int main()
+{
+	LogMessage log{ LogLevel::INFO, "Task started", std::this_thread::get_id() };
+	// 使用 std::format 来格式化 LogMessage 对象
+	std::cout << std::format("Log: {}", log) << std::endl;
+	return 0;
+}
